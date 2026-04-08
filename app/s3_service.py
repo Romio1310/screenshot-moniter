@@ -124,11 +124,18 @@ def list_s3_screenshots() -> list:
 
         screenshots = []
         for obj in response.get("Contents", []):
+            # Generate a secure pre-signed URL valid for 1 hour
+            presigned_url = client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': Config.S3_BUCKET, 'Key': obj['Key']},
+                ExpiresIn=3600
+            )
+            
             screenshots.append({
                 "key": obj["Key"],
                 "size": obj["Size"],
                 "last_modified": obj["LastModified"].isoformat(),
-                "url": f"https://{Config.S3_BUCKET}.s3.{Config.S3_REGION}.amazonaws.com/{obj['Key']}",
+                "url": presigned_url,
             })
 
         return screenshots

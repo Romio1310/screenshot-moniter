@@ -243,18 +243,18 @@
 
     <div class="content">
         <div class="server-input">
-            <input type="text" id="server-url" placeholder="http://localhost:5000">
-            <button id="save-url" onclick="saveUrl()">Save</button>
+            <input type="text" id="server-url" placeholder="http://localhost:5005">
+            <button id="save-url">Save</button>
         </div>
 
         <div class="actions">
-            <button class="btn btn-primary" id="capture-btn" onclick="captureNow()">
+            <button class="btn btn-primary" id="capture-btn">
                 <span class="btn-text">📷 Capture Screenshot</span>
                 <div class="spinner"></div>
             </button>
 
-            <button class="btn btn-auto" id="auto-btn" onclick="toggleAuto()">
-                <span class="btn-text">⏱️ Auto-Capture (Every 30s)</span>
+            <button class="btn btn-auto" id="auto-btn">
+                <span class="btn-text">⏱️ Auto-Capture (Every 5s)</span>
             </button>
         </div>
 
@@ -272,105 +272,7 @@
         <div class="feedback" id="feedback"></div>
     </div>
 
-    <script>
-        // ═══ Initialize ═══
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStatus();
-            checkServer();
-        });
-
-        // ═══ Load Status ═══
-        function loadStatus() {
-            chrome.runtime.sendMessage({ action: 'getStatus' }, (response) => {
-                if (response) {
-                    document.getElementById('server-url').value = response.serverUrl || 'http://localhost:5000';
-                    document.getElementById('capture-count').textContent = response.captureCount || 0;
-
-                    const autoBtn = document.getElementById('auto-btn');
-                    const autoStatus = document.getElementById('auto-status');
-
-                    if (response.autoCapture) {
-                        autoBtn.classList.add('active');
-                        autoBtn.querySelector('.btn-text').textContent = '⏹ Stop Auto-Capture';
-                        autoStatus.textContent = 'ON';
-                    } else {
-                        autoBtn.classList.remove('active');
-                        autoBtn.querySelector('.btn-text').textContent = '⏱️ Auto-Capture (Every 30s)';
-                        autoStatus.textContent = 'OFF';
-                    }
-                }
-            });
-        }
-
-        // ═══ Check Server ═══
-        async function checkServer() {
-            const urlInput = document.getElementById('server-url');
-            const url = urlInput.value || 'http://localhost:5000';
-
-            try {
-                const res = await fetch(`${url}/`, { method: 'GET' });
-                const data = await res.json();
-
-                document.getElementById('status-dot').classList.add('connected');
-                document.getElementById('status-text').textContent =
-                    `Connected — ${data.screenshot_count || 0} screenshots`;
-            } catch {
-                document.getElementById('status-dot').classList.remove('connected');
-                document.getElementById('status-text').textContent = 'Server offline';
-            }
-        }
-
-        // ═══ Save URL ═══
-        function saveUrl() {
-            const url = document.getElementById('server-url').value.trim();
-            if (url) {
-                chrome.runtime.sendMessage({ action: 'setServerUrl', url });
-                showFeedback('Server URL saved', 'success');
-                checkServer();
-            }
-        }
-
-        // ═══ Manual Capture ═══
-        async function captureNow() {
-            const btn = document.getElementById('capture-btn');
-            btn.classList.add('loading');
-
-            chrome.runtime.sendMessage({ action: 'captureScreenshot' }, (response) => {
-                btn.classList.remove('loading');
-
-                if (response && response.success) {
-                    showFeedback('✓ Screenshot captured and uploaded!', 'success');
-                    loadStatus(); // Refresh count
-                } else {
-                    showFeedback(`✗ ${response?.error || 'Capture failed'}`, 'error');
-                }
-            });
-        }
-
-        // ═══ Toggle Auto-Capture ═══
-        function toggleAuto() {
-            chrome.runtime.sendMessage({ action: 'getStatus' }, (response) => {
-                if (response.autoCapture) {
-                    chrome.runtime.sendMessage({ action: 'stopAutoCapture' }, () => {
-                        showFeedback('Auto-capture stopped', 'success');
-                        loadStatus();
-                    });
-                } else {
-                    chrome.runtime.sendMessage({ action: 'startAutoCapture' }, () => {
-                        showFeedback('Auto-capture started (every 30s)', 'success');
-                        loadStatus();
-                    });
-                }
-            });
-        }
-
-        // ═══ Feedback Toast ═══
-        function showFeedback(message, type) {
-            const fb = document.getElementById('feedback');
-            fb.textContent = message;
-            fb.className = `feedback ${type}`;
-            setTimeout(() => { fb.className = 'feedback'; }, 3000);
-        }
-    </script>
+    <!-- Move script to external file for Manifest V3 compliance -->
+    <script src="popup.js"></script>
 </body>
 </html>

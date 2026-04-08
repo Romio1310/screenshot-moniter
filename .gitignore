@@ -37,3 +37,6 @@ app/screenshots/*.jpg
 app/screenshots/*.jpeg
 app/screenshots/*.gif
 app/screenshots/*.bmp
+
+# Planning & Skills (Get Shit Done)
+.planning/

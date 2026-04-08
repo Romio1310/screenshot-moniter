@@ -3,6 +3,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask
+from flask_cors import CORS
 
 from app.config import Config
 
@@ -10,6 +11,7 @@ from app.config import Config
 def create_app() -> Flask:
     """Create and configure the Flask application."""
     app = Flask(__name__)
+    CORS(app)  # Enable Cross-Origin Resource Sharing
 
     # Load configuration
     app.config.from_object(Config)

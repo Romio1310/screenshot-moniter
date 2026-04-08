@@ -4,21 +4,17 @@
  * Handles auto-capture alarms and screenshot transmission to the backend.
  */
 
-const ALARM_NAME = "screenshot-auto-capture";
-const DEFAULT_INTERVAL = 0.5; // Chrome alarms minimum is 0.5 minutes (30 seconds)
+// ─── Timer-based Auto Capture (Fast 5s) ─────────────────
+let captureIntervalId = null;
 
-// ─── Alarm-based Auto Capture ───────────────────────────
-
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === ALARM_NAME) {
-    console.log("[Screenshot Monitor] Auto-capture triggered");
-    try {
-      await captureAndSend();
-    } catch (err) {
-      console.error("[Screenshot Monitor] Auto-capture failed:", err);
-    }
+async function runAutoCapture() {
+  console.log("[Screenshot Monitor] Auto-capture triggered");
+  try {
+    await captureAndSend();
+  } catch (err) {
+    console.error("[Screenshot Monitor] Auto-capture failed:", err);
   }
-});
+}
 
 // ─── Message Handler (from popup) ───────────────────────
 
@@ -31,16 +27,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "startAutoCapture") {
-    chrome.alarms.create(ALARM_NAME, {
-      periodInMinutes: DEFAULT_INTERVAL,
-    });
+    if (!captureIntervalId) {
+      captureIntervalId = setInterval(runAutoCapture, 5000);
+    }
     chrome.storage.local.set({ autoCapture: true });
-    console.log("[Screenshot Monitor] Auto-capture started (every 30s)");
+    console.log("[Screenshot Monitor] Auto-capture started (every 5s)");
     sendResponse({ success: true, status: "started" });
   }
 
   if (message.action === "stopAutoCapture") {
-    chrome.alarms.clear(ALARM_NAME);
+    if (captureIntervalId) {
+      clearInterval(captureIntervalId);
+      captureIntervalId = null;
+    }
     chrome.storage.local.set({ autoCapture: false });
     console.log("[Screenshot Monitor] Auto-capture stopped");
     sendResponse({ success: true, status: "stopped" });
@@ -50,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get(["autoCapture", "serverUrl", "captureCount"], (data) => {
       sendResponse({
         autoCapture: data.autoCapture || false,
-        serverUrl: data.serverUrl || "http://localhost:5000",
+        serverUrl: data.serverUrl || "http://localhost:5005",
         captureCount: data.captureCount || 0,
       });
     });
@@ -69,8 +68,14 @@ async function captureAndSend() {
   // Get the active tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  if (!tab || !tab.id) {
+  if (!tab || !tab.id || !tab.url) {
     throw new Error("No active tab found");
+  }
+
+  // Soft-fail for protected pages to avoid red extension console errors
+  if (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:")) {
+    console.warn("[Screenshot Monitor] Skipping protected browser page.");
+    return { success: false, ignored: true };
   }
 
   // Capture visible tab as PNG data URL
@@ -84,7 +89,7 @@ async function captureAndSend() {
 
   // Get server URL from storage
   const { serverUrl } = await chrome.storage.local.get("serverUrl");
-  const baseUrl = serverUrl || "http://localhost:5000";
+  const baseUrl = serverUrl || "http://localhost:5005";
 
   // Create form data
   const formData = new FormData();
@@ -130,7 +135,7 @@ function dataURLtoBlob(dataUrl) {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     autoCapture: false,
-    serverUrl: "http://localhost:5000",
+    serverUrl: "http://localhost:5005",
     captureCount: 0,
   });
   console.log("[Screenshot Monitor] Extension installed and configured");

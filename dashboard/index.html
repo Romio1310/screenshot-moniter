@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Intelligent Screenshot Monitoring System — Real-time dashboard for captured screenshots">
+    <meta name="description"
+        content="Intelligent Screenshot Monitoring System — Real-time dashboard for captured screenshots">
     <title>Screenshot Monitor — Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,8 +34,12 @@
         }
 
         /* ═══ Reset & Base ═══ */
-        *, *::before, *::after {
-            margin: 0; padding: 0; box-sizing: border-box;
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
@@ -111,12 +117,26 @@
             animation: pulse-dot 2s ease-in-out infinite;
         }
 
-        .stat-dot.live { background: var(--success); }
-        .stat-dot.count { background: var(--accent); }
+        .stat-dot.live {
+            background: var(--success);
+        }
+
+        .stat-dot.count {
+            background: var(--accent);
+        }
 
         @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.85); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
         }
 
         .refresh-badge {
@@ -171,8 +191,13 @@
             color: var(--text-primary);
         }
 
-        .status-card .value.success { color: var(--success); }
-        .status-card .value.accent { color: var(--accent); }
+        .status-card .value.success {
+            color: var(--success);
+        }
+
+        .status-card .value.accent {
+            color: var(--accent);
+        }
 
         /* ═══ Screenshot Grid ═══ */
         .section-header {
@@ -230,7 +255,7 @@
         .screenshot-card .overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 50%);
             opacity: 0;
             transition: opacity var(--transition);
             display: flex;
@@ -320,7 +345,7 @@
             max-width: 90%;
             max-height: 90vh;
             border-radius: var(--radius);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .lightbox .close-btn {
@@ -330,8 +355,8 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
@@ -342,12 +367,17 @@
         }
 
         .lightbox .close-btn:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* ═══ Loading ═══ */
@@ -364,19 +394,37 @@
             width: 100%;
         }
 
-        .loading-bar.active { display: block; }
+        .loading-bar.active {
+            display: block;
+        }
 
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         /* ═══ Responsive ═══ */
         @media (max-width: 768px) {
-            .header { padding: 1rem; }
-            .main { padding: 1rem; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-            .header-stats { gap: 0.75rem; }
+            .header {
+                padding: 1rem;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+
+            .header-stats {
+                gap: 0.75rem;
+            }
         }
 
         /* ═══ Toast ═══ */
@@ -402,6 +450,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="loading-bar" class="loading-bar"></div>
 
@@ -422,7 +471,7 @@
                     <span id="count-text">0 screenshots</span>
                 </div>
                 <div class="refresh-badge" id="refresh-badge">
-                    Auto-refresh: 30s
+                    Auto-refresh: 5s
                 </div>
             </div>
         </div>
@@ -473,7 +522,7 @@
 
     <script>
         // ═══ Configuration ═══
-        const REFRESH_INTERVAL = 30000; // 30 seconds
+        const REFRESH_INTERVAL = 5000; // 5 seconds
         const API_BASE = window.location.origin;
 
         let refreshTimer = null;
@@ -626,7 +675,7 @@
         }
 
         // ═══ Auto-Refresh with Countdown ═══
-        let countdown = 30;
+        let countdown = 5;
 
         function startAutoRefresh() {
             refresh(); // Initial load
@@ -634,7 +683,7 @@
             setInterval(() => {
                 countdown--;
                 if (countdown <= 0) {
-                    countdown = 30;
+                    countdown = 5;
                     refresh();
                 }
                 document.getElementById('refresh-badge').textContent = `Auto-refresh: ${countdown}s`;
@@ -645,4 +694,5 @@
         startAutoRefresh();
     </script>
 </body>
+
 </html>

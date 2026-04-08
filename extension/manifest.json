@@ -9,6 +9,11 @@
     "storage",
     "alarms"
   ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

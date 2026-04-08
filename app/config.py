@@ -1,7 +1,10 @@
 """Application configuration."""
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 class Config:
     """Base configuration."""
@@ -30,5 +33,5 @@ class Config:
 
     # Server
     HOST = os.environ.get("HOST", "0.0.0.0")
-    PORT = int(os.environ.get("PORT", 5000))
+    PORT = int(os.environ.get("PORT", 5005))
     DEBUG = os.environ.get("FLASK_DEBUG", "false").lower() == "true"

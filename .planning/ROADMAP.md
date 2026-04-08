@@ -32,7 +32,7 @@
 4. Screenshots are uploaded to S3 bucket on capture
 5. S3 credentials read from environment variables
 
-**Status:** Not started
+**Status:** Not startedl
 
 ---
 
