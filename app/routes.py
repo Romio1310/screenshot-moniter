@@ -1,10 +1,12 @@
 """API routes for the Screenshot Monitoring System."""
 import logging
+import os
 import time
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, send_file
 
 from app.config import Config
 from app.storage import save_screenshot, list_screenshots
+from app.s3_service import upload_to_s3
 
 logger = logging.getLogger(__name__)
 
@@ -81,16 +83,20 @@ def upload():
             logger.warning("Upload attempt with empty filename")
             return jsonify({"error": "No file selected"}), 400
 
-        # Save the screenshot
+        # Save the screenshot locally
         metadata = save_screenshot(file)
 
+        # Upload to S3 (non-blocking — failure doesn't affect local save)
+        s3_result = upload_to_s3(metadata["path"], metadata["filename"])
+
         logger.info(
-            "Upload successful: %s (%d bytes)",
+            "Upload successful: %s (%d bytes) | S3: %s",
             metadata["filename"],
             metadata["size"],
+            "uploaded" if s3_result.get("success") else "skipped/failed",
         )
 
-        return jsonify({
+        response_data = {
             "message": "Screenshot uploaded successfully",
             "screenshot": {
                 "filename": metadata["filename"],
@@ -99,7 +105,10 @@ def upload():
                 "size": metadata["size"],
                 "url": f"/screenshots/files/{metadata['filename']}",
             },
-        }), 201
+            "s3": s3_result,
+        }
+
+        return jsonify(response_data), 201
 
     except ValueError as e:
         logger.warning("Upload validation error: %s", str(e))
@@ -145,6 +154,24 @@ def serve_screenshot(filename):
     except Exception as e:
         logger.error("Failed to serve screenshot: %s", str(e), exc_info=True)
         return jsonify({"error": "Failed to serve screenshot"}), 500
+
+
+# ─────────────────────────────────────────────
+# GET /dashboard — Serve the monitoring dashboard
+# ─────────────────────────────────────────────
+@api.route("/dashboard", methods=["GET"])
+def dashboard():
+    """Serve the screenshot monitoring dashboard."""
+    dashboard_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "dashboard",
+        "index.html",
+    )
+    try:
+        return send_file(dashboard_path)
+    except FileNotFoundError:
+        logger.error("Dashboard file not found: %s", dashboard_path)
+        return jsonify({"error": "Dashboard not found"}), 404
 
 
 # ─────────────────────────────────────────────
