@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot Monitor</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --bg-card: #222240;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --success: #10b981;
+            --error: #ef4444;
+            --text: #f0f0f5;
+            --text-dim: #8888a0;
+            --border: rgba(255,255,255,0.08);
+            --radius: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            width: 320px;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header .logo {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .header h1 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .header h1 span { color: var(--accent); }
+
+        .status-strip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .status-dot.connected { background: var(--success); }
+
+        .content { padding: 16px 20px; }
+
+        .server-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .server-input input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .server-input input:focus {
+            border-color: var(--accent);
+        }
+
+        .server-input button {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-dim);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .server-input button:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-auto {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-auto:hover {
+            border-color: var(--success);
+        }
+
+        .btn-auto.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat .num {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .feedback {
+            margin-top: 12px;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            font-size: 11px;
+            text-align: center;
+            display: none;
+        }
+
+        .feedback.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .feedback.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+
+        .btn.loading .spinner { display: inline-block; }
+        .btn.loading .btn-text { display: none; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📸</div>
+        <h1>Screenshot <span>Monitor</span></h1>
+    </div>
+
+    <div class="status-strip">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Checking server...</span>
+    </div>
+
+    <div class="content">
+        <div class="server-input">
+            <input type="text" id="server-url" placeholder="http://localhost:5000">
+            <button id="save-url" onclick="saveUrl()">Save</button>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" id="capture-btn" onclick="captureNow()">
+                <span class="btn-text">📷 Capture Screenshot</span>
+                <div class="spinner"></div>
+            </button>
+
+            <button class="btn btn-auto" id="auto-btn" onclick="toggleAuto()">
+                <span class="btn-text">⏱️ Auto-Capture (Every 30s)</span>
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="num" id="capture-count">0</div>
+                <div class="label">Captured</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="auto-status">OFF</div>
+                <div class="label">Auto-Capture</div>
+            </div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <script>
+        // ═══ Initialize ═══
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatus();
+            checkServer();
+        });
+
+        // ═══ Load Status ═══
+        function loadStatus() {
+            chrome.runtime.sendMessage({ action: 'getStatus' }, (response) => {
+                if (response) {
+                    document.getElementById('server-url').value = response.serverUrl || 'http://localhost:5000';
+                    document.getElementById('capture-count').textContent = response.captureCount || 0;
+
+                    const autoBtn = document.getElementById('auto-btn');
+                    const autoStatus = document.getElementById('auto-status');
+
+                    if (response.autoCapture) {
+                        autoBtn.classList.add('active');
+                        autoBtn.querySelector('.btn-text').textContent = '⏹ Stop Auto-Capture';
+                        autoStatus.textContent = 'ON';
+                    } else {
+                        autoBtn.classList.remove('active');
+                        autoBtn.querySelector('.btn-text').textContent = '⏱️ Auto-Capture (Every 30s)';
+                        autoStatus.textContent = 'OFF';
+                    }
+                }
+            });
+        }
+
+        // ═══ Check Server ═══
+        async function checkServer() {
+            const urlInput = document.getElementById('server-url');
+            const url = urlInput.value || 'http://localhost:5000';
+
+            try {
+                const res = await fetch(`${url}/`, { method: 'GET' });
+                const data = await res.json();
+
+                document.getElementById('status-dot').classList.add('connected');
+                document.getElementById('status-text').textContent =
+                    `Connected — ${data.screenshot_count || 0} screenshots`;
+            } catch {
+                document.getElementById('status-dot').classList.remove('connected');
+                document.getElementById('status-text').textContent = 'Server offline';
+            }
+        }
+
+        // ═══ Save URL ═══
+        function saveUrl() {
+            const url = document.getElementById('server-url').value.trim();
+            if (url) {
+                chrome.runtime.sendMessage({ action: 'setServerUrl', url });
+                showFeedback('Server URL saved', 'success');
+                checkServer();
+            }
+        }
+
+        // ═══ Manual Capture ═══
+        async function captureNow() {
+            const btn = document.getElementById('capture-btn');
+            btn.classList.add('loading');
+
+            chrome.runtime.sendMessage({ action: 'captureScreenshot' }, (response) => {
+                btn.classList.remove('loading');
+
+                if (response && response.success) {
+                    showFeedback('✓ Screenshot captured and uploaded!', 'success');
+                    loadStatus(); // Refresh count
+                } else {
+                    showFeedback(`✗ ${response?.error || 'Capture failed'}`, 'error');
+                }
+            });
+        }
+
+        // ═══ Toggle Auto-Capture ═══
+        function toggleAuto() {
+            chrome.runtime.sendMessage({ action: 'getStatus' }, (response) => {
+                if (response.autoCapture) {
+                    chrome.runtime.sendMessage({ action: 'stopAutoCapture' }, () => {
+                        showFeedback('Auto-capture stopped', 'success');
+                        loadStatus();
+                    });
+                } else {
+                    chrome.runtime.sendMessage({ action: 'startAutoCapture' }, () => {
+                        showFeedback('Auto-capture started (every 30s)', 'success');
+                        loadStatus();
+                    });
+                }
+            });
+        }
+
+        // ═══ Feedback Toast ═══
+        function showFeedback(message, type) {
+            const fb = document.getElementById('feedback');
+            fb.textContent = message;
+            fb.className = `feedback ${type}`;
+            setTimeout(() => { fb.className = 'feedback'; }, 3000);
+        }
+    </script>
+</body>
+</html>
