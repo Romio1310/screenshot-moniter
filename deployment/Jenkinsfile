@@ -1,0 +1,152 @@
+// ═══════════════════════════════════════════════════════
+// Jenkinsfile — Intelligent Screenshot Monitoring System
+// CI/CD Pipeline: Clone → Install → Build → Run
+// ═══════════════════════════════════════════════════════
+
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE   = 'screenshot-monitor'
+        DOCKER_TAG     = "${BUILD_NUMBER}"
+        CONTAINER_NAME = 'screenshot-monitor-app'
+        APP_PORT       = '5000'
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+
+        // ─── Stage 1: Clone Repository ──────────────────
+        stage('Clone') {
+            steps {
+                echo '━━━ Cloning repository... ━━━'
+                checkout scm
+            }
+        }
+
+        // ─── Stage 2: Install Dependencies ──────────────
+        stage('Install Dependencies') {
+            steps {
+                echo '━━━ Installing Python dependencies... ━━━'
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+
+        // ─── Stage 3: Run Tests ─────────────────────────
+        stage('Test') {
+            steps {
+                echo '━━━ Running tests... ━━━'
+                sh '''
+                    . venv/bin/activate
+                    python3 -c "
+from app.main import create_app
+app = create_app()
+with app.test_client() as client:
+    # Status check
+    r = client.get('/')
+    assert r.status_code == 200, f'Status check failed: {r.status_code}'
+
+    # Upload validation
+    r = client.post('/upload')
+    assert r.status_code == 400, f'Upload validation failed: {r.status_code}'
+
+    # Screenshots list
+    r = client.get('/screenshots')
+    assert r.status_code == 200, f'Screenshots list failed: {r.status_code}'
+
+    # Dashboard
+    r = client.get('/dashboard')
+    assert r.status_code == 200, f'Dashboard failed: {r.status_code}'
+
+    print('All tests passed ✓')
+"
+                '''
+            }
+        }
+
+        // ─── Stage 4: Build Docker Image ────────────────
+        stage('Build Docker Image') {
+            steps {
+                echo '━━━ Building Docker image... ━━━'
+                sh '''
+                    docker build \
+                        -f deployment/Dockerfile \
+                        -t ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                        -t ${DOCKER_IMAGE}:latest \
+                        .
+                '''
+            }
+        }
+
+        // ─── Stage 5: Run Container ─────────────────────
+        stage('Run Container') {
+            steps {
+                echo '━━━ Deploying container... ━━━'
+                sh '''
+                    # Stop existing container if running
+                    docker stop ${CONTAINER_NAME} 2>/dev/null || true
+                    docker rm ${CONTAINER_NAME} 2>/dev/null || true
+
+                    # Run new container
+                    docker run -d \
+                        --name ${CONTAINER_NAME} \
+                        -p ${APP_PORT}:5000 \
+                        -e S3_ENABLED=false \
+                        -e LOG_LEVEL=INFO \
+                        --restart unless-stopped \
+                        ${DOCKER_IMAGE}:${DOCKER_TAG}
+
+                    # Wait for healthy
+                    echo "Waiting for container to be ready..."
+                    sleep 5
+
+                    # Verify running
+                    docker ps --filter "name=${CONTAINER_NAME}" --format "{{.Status}}"
+                '''
+            }
+        }
+
+        // ─── Stage 6: Smoke Test ────────────────────────
+        stage('Smoke Test') {
+            steps {
+                echo '━━━ Running smoke tests... ━━━'
+                sh '''
+                    sleep 3
+                    STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${APP_PORT}/)
+                    if [ "$STATUS" = "200" ]; then
+                        echo "✓ Health check passed (HTTP ${STATUS})"
+                    else
+                        echo "✗ Health check failed (HTTP ${STATUS})"
+                        exit 1
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '━━━ Pipeline completed successfully ✓ ━━━'
+            echo "Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+            echo "Container: ${CONTAINER_NAME}"
+            echo "URL: http://localhost:${APP_PORT}/dashboard"
+        }
+        failure {
+            echo '━━━ Pipeline failed ✗ ━━━'
+            sh 'docker logs ${CONTAINER_NAME} 2>/dev/null || true'
+        }
+        cleanup {
+            sh 'rm -rf venv || true'
+        }
+    }
+}

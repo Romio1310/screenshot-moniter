@@ -1,0 +1,134 @@
+# ═══════════════════════════════════════════════════════
+# Kubernetes Deployment — Intelligent Screenshot Monitoring System
+# 2 replicas with health checks, resource limits, and service
+# ═══════════════════════════════════════════════════════
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: screenshot-monitor
+  labels:
+    app: screenshot-monitor
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: screenshot-monitor
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: screenshot-monitor
+        version: "1.0.0"
+    spec:
+      containers:
+        - name: screenshot-monitor
+          image: screenshot-monitor:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "5000"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: S3_ENABLED
+              value: "false"
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: screenshot-monitor-secrets
+                  key: s3-bucket
+                  optional: true
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: screenshot-monitor-secrets
+                  key: aws-access-key-id
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: screenshot-monitor-secrets
+                  key: aws-secret-access-key
+                  optional: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: screenshots-storage
+              mountPath: /app/app/screenshots
+            - name: logs-storage
+              mountPath: /app/app/logs
+      volumes:
+        - name: screenshots-storage
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: logs-storage
+          emptyDir:
+            sizeLimit: 100Mi
+
+---
+# ═══ Service ═══
+apiVersion: v1
+kind: Service
+metadata:
+  name: screenshot-monitor-service
+  labels:
+    app: screenshot-monitor
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+      protocol: TCP
+      name: http
+  selector:
+    app: screenshot-monitor
+
+---
+# ═══ Ingress (optional) ═══
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: screenshot-monitor-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+spec:
+  rules:
+    - host: screenshot-monitor.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: screenshot-monitor-service
+                port:
+                  number: 80
