@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+env/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+app/logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Screenshots (local storage - don't commit binary files)
+app/screenshots/*.png
+app/screenshots/*.jpg
+app/screenshots/*.jpeg
+app/screenshots/*.gif
+app/screenshots/*.bmp
