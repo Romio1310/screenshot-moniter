@@ -75,15 +75,22 @@
             gap: 0.75rem;
         }
 
-        .logo-icon {
+        .logo-image-container {
             width: 36px;
             height: 36px;
-            background: linear-gradient(135deg, var(--accent), #a855f7);
+            background: white;
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .logo-img {
+            width: 130%; /* Zoom in slightly to hide the built-in text in the generation */
+            height: 130%;
+            object-fit: contain;
         }
 
         .logo h1 {
@@ -649,7 +656,9 @@
         <header class="header area-header">
             <div class="header-inner">
                 <div class="logo">
-                    <div class="logo-icon">📸</div>
+                    <div class="logo-image-container">
+                        <img src="/dashboard/assets/logo.png" alt="Logo" class="logo-img">
+                    </div>
                     <h1>Screenshot <span>Monitor</span></h1>
                 </div>
                 <div class="header-stats">

@@ -35,15 +35,22 @@
             gap: 10px;
         }
 
-        .header .logo {
+        .header .logo-container {
             width: 28px;
             height: 28px;
-            background: linear-gradient(135deg, var(--accent), #a855f7);
+            background: white;
             border-radius: 7px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+        }
+
+        .header .logo-img {
+            width: 140%;
+            height: 140%;
+            object-fit: contain;
         }
 
         .header h1 {
@@ -232,7 +239,9 @@
 </head>
 <body>
     <div class="header">
-        <div class="logo">📸</div>
+        <div class="logo-container">
+            <img src="assets/logo.png" class="logo-img" alt="Logo">
+        </div>
         <h1>Screenshot <span>Monitor</span></h1>
     </div>
 
