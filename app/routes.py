@@ -218,6 +218,20 @@ def dashboard():
 
 
 # ─────────────────────────────────────────────
+# GET /dashboard/assets/<path:filename> — Serve assets
+# ─────────────────────────────────────────────
+@api.route("/dashboard/assets/<path:filename>")
+def serve_dashboard_assets(filename):
+    """Serve static assets for the dashboard."""
+    assets_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "dashboard",
+        "assets",
+    )
+    return send_from_directory(assets_path, filename)
+
+
+# ─────────────────────────────────────────────
 # Error handlers
 # ─────────────────────────────────────────────
 @api.app_errorhandler(404)
