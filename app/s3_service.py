@@ -141,6 +141,9 @@ def list_s3_screenshots() -> list:
                 "url": presigned_url,
             })
 
+        # Sort by timestamp descending (newest first)
+        screenshots.sort(key=lambda x: x['timestamp'], reverse=True)
+
         return screenshots
 
     except Exception as e:

@@ -695,6 +695,8 @@
             document.getElementById('count-text').textContent = `${data.screenshot_count || 0} screenshots`;
         }
 
+        const currentFilenames = new Set();
+
         function updateGrid(data) {
             const grid = document.getElementById('screenshot-grid');
 
@@ -704,19 +706,35 @@
                         <div class="icon">📭</div>
                         <p>No screenshots captured yet. Install the Chrome Extension or upload manually via the API.</p>
                     </div>`;
+                currentFilenames.clear();
                 return;
             }
 
-            // Check for new screenshots
-            if (data.screenshots.length > lastScreenshotCount && lastScreenshotCount > 0) {
-                showToast(`📸 ${data.screenshots.length - lastScreenshotCount} new screenshot(s)`);
-            }
-            lastScreenshotCount = data.screenshots.length;
+            // Remove empty state if it exists
+            const emptyState = grid.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
 
-            grid.innerHTML = data.screenshots.map(s => {
+            const newScreenshots = data.screenshots;
+            const incomingFilenames = new Set(newScreenshots.map(s => s.filename));
+
+            // 1. Remove cards that no longer exist
+            currentFilenames.forEach(filename => {
+                if (!incomingFilenames.has(filename)) {
+                    const cardId = `card-${filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                    const card = document.getElementById(cardId);
+                    if (card) card.remove();
+                    currentFilenames.delete(filename);
+                }
+            });
+
+            // 2. Add new cards or update existing ones
+            // We iterate in reverse to prepend newest first correctly if multiple arrive
+            [...newScreenshots].reverse().forEach(s => {
                 const isSelected = selectedFiles.has(s.filename);
-                return `
-                <div class="screenshot-card ${isSelected ? 'selected' : ''}" id="card-${s.filename.replace(/[^a-zA-Z0-9]/g, '_')}" onclick="handleCardClick('${s.filename}', '${s.url}')">
+                const cardId = `card-${s.filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                let card = document.getElementById(cardId);
+
+                const cardHtml = `
                     <div class="check-overlay">
                         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
                     </div>
@@ -732,8 +750,37 @@
                         <div class="timestamp">${formatTimestamp(s.timestamp)}</div>
                         <div class="size">${formatSize(s.size)}</div>
                     </div>
-                </div>
-            `}).join('');
+                `;
+
+                if (!card) {
+                    // New screenshot! Prepend it.
+                    card = document.createElement('div');
+                    card.id = cardId;
+                    card.className = `screenshot-card ${isSelected ? 'selected' : ''}`;
+                    card.onclick = () => handleCardClick(s.filename, s.url);
+                    card.innerHTML = cardHtml;
+                    grid.insertBefore(card, grid.firstChild);
+                    currentFilenames.add(s.filename);
+                    
+                    // Trigger a small entrance animation
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    requestAnimationFrame(() => {
+                        card.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    });
+                } else {
+                    // Update existing card classes if selection changed
+                    card.className = `screenshot-card ${isSelected ? 'selected' : ''}`;
+                }
+            });
+
+            // Check for total increment toast
+            if (data.screenshots.length > lastScreenshotCount && lastScreenshotCount > 0) {
+                showToast(`📸 ${data.screenshots.length - lastScreenshotCount} new screenshot(s)`);
+            }
+            lastScreenshotCount = data.screenshots.length;
         }
 
         // ═══ Helpers ═══
