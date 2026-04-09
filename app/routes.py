@@ -5,8 +5,8 @@ import time
 from flask import Blueprint, request, jsonify, send_from_directory, send_file
 
 from app.config import Config
-from app.storage import save_screenshot, list_screenshots
-from app.s3_service import upload_to_s3
+from app.storage import save_screenshot, list_screenshots, delete_local_screenshot
+from app.s3_service import upload_to_s3, delete_from_s3
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +136,47 @@ def screenshots():
     except Exception as e:
         logger.error("Failed to list screenshots: %s", str(e), exc_info=True)
         return jsonify({"error": "Failed to retrieve screenshots"}), 500
+
+# ─────────────────────────────────────────────
+# POST /screenshots/delete — Bulk Delete Screenshots
+# ─────────────────────────────────────────────
+@api.route("/screenshots/delete", methods=["POST"])
+def delete_screenshots():
+    """Delete an array of screenshots from storage and S3."""
+    try:
+        data = request.get_json()
+        if not data or "filenames" not in data or not isinstance(data["filenames"], list):
+            return jsonify({"error": "Invalid payload. Expected a list of filenames under 'filenames'"}), 400
+
+        filenames = data["filenames"]
+        results = []
+        deleted_count = 0
+
+        for filename in filenames:
+            # Delete from S3 if enabled
+            s3_success = False
+            if Config.S3_ENABLED:
+                s3_result = delete_from_s3(filename)
+                s3_success = s3_result.get("success", False)
+
+            # Always try to delete locally as well
+            local_success = delete_local_screenshot(filename)
+            
+            if s3_success or local_success:
+                deleted_count += 1
+                results.append({"filename": filename, "status": "deleted", "s3": s3_success, "local": local_success})
+            else:
+                results.append({"filename": filename, "status": "failed"})
+
+        return jsonify({
+            "message": f"Successfully deleted {deleted_count} screenshots",
+            "deleted_count": deleted_count,
+            "results": results
+        }), 200
+
+    except Exception as e:
+        logger.error("Failed to delete screenshots: %s", str(e), exc_info=True)
+        return jsonify({"error": "Internal server error during deletion"}), 500
 
 
 # ─────────────────────────────────────────────

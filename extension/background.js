@@ -89,7 +89,10 @@ async function captureAndSend() {
 
   // Get server URL from storage
   const { serverUrl } = await chrome.storage.local.get("serverUrl");
-  const baseUrl = serverUrl || "http://localhost:5005";
+  let baseUrl = serverUrl ? serverUrl.trim() : "http://localhost:5005";
+  if (baseUrl.endsWith('/')) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
 
   // Create form data
   const formData = new FormData();

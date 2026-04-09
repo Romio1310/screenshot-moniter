@@ -143,3 +143,21 @@ def list_s3_screenshots() -> list:
     except Exception as e:
         logger.error("Failed to list S3 screenshots: %s", str(e))
         return []
+
+def delete_from_s3(filename: str) -> dict:
+    """Delete a specific screenshot from S3."""
+    if not Config.S3_ENABLED:
+        return {"success": False, "skipped": True, "message": "S3 disabled"}
+
+    client = get_s3_client()
+    if not client:
+        return {"success": False, "error": "Failed to create S3 client"}
+
+    try:
+        s3_key = f"screenshots/{filename}"
+        client.delete_object(Bucket=Config.S3_BUCKET, Key=s3_key)
+        logger.info("Successfully deleted S3 object: %s", s3_key)
+        return {"success": True}
+    except Exception as e:
+        logger.error("Failed to delete from S3: %s", str(e))
+        return {"success": False, "error": str(e)}

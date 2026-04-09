@@ -448,6 +448,121 @@
             transform: translateY(0);
             opacity: 1;
         }
+
+        /* ═══ Selection Mode & Action Bar ═══ */
+        .screenshot-card {
+            position: relative;
+        }
+
+        .screenshot-card.selected {
+            border-color: var(--error);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .screenshot-card.selected .image-wrapper img {
+            opacity: 0.5;
+        }
+
+        .check-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: var(--error);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .check-overlay svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        .screenshot-card.selected .check-overlay {
+            opacity: 1;
+        }
+
+        .grid.selection-mode .screenshot-card .overlay {
+            display: none; /* Hide 'View Full Size' text during selection */
+        }
+
+        .btn-toggle-select {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-toggle-select:hover {
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+
+        .btn-toggle-select.active {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .action-bar {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(26, 26, 37, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--error);
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .action-bar.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .action-bar span {
+            font-weight: 600;
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 
@@ -462,6 +577,7 @@
                 <h1>Screenshot <span>Monitor</span></h1>
             </div>
             <div class="header-stats">
+                <button class="btn-toggle-select" id="btn-select" onclick="toggleSelectionMode()">Select Items</button>
                 <div class="stat">
                     <div class="stat-dot live"></div>
                     <span id="status-text">Connecting...</span>
@@ -519,6 +635,16 @@
 
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
+
+    <!-- Floating Action Bar -->
+    <div class="action-bar" id="action-bar">
+        <span id="selection-count">0 Selected</span>
+        <button class="btn-delete" onclick="deleteSelected()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            Delete
+        </button>
+        <button class="btn-toggle-select" style="border:none; color:#8888a0;" onclick="toggleSelectionMode()">Cancel</button>
+    </div>
 
     <script>
         // ═══ Configuration ═══
@@ -587,8 +713,13 @@
             }
             lastScreenshotCount = data.screenshots.length;
 
-            grid.innerHTML = data.screenshots.map(s => `
-                <div class="screenshot-card" onclick="openLightbox('${s.url}')">
+            grid.innerHTML = data.screenshots.map(s => {
+                const isSelected = selectedFiles.has(s.filename);
+                return `
+                <div class="screenshot-card ${isSelected ? 'selected' : ''}" id="card-${s.filename.replace(/[^a-zA-Z0-9]/g, '_')}" onclick="handleCardClick('${s.filename}', '${s.url}')">
+                    <div class="check-overlay">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+                    </div>
                     <div class="image-wrapper">
                         <img src="${s.url}" alt="${s.filename}" loading="lazy"
                              onerror="this.src='data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 400 250&quot;><rect fill=&quot;%231a1a25&quot; width=&quot;400&quot; height=&quot;250&quot;/><text fill=&quot;%2355556a&quot; x=&quot;200&quot; y=&quot;130&quot; text-anchor=&quot;middle&quot; font-size=&quot;14&quot;>Preview unavailable</text></svg>'">
@@ -602,7 +733,7 @@
                         <div class="size">${formatSize(s.size)}</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // ═══ Helpers ═══
@@ -681,6 +812,8 @@
             refresh(); // Initial load
 
             setInterval(() => {
+                if (isSelectionMode) return; // Pause refresh during selection
+
                 countdown--;
                 if (countdown <= 0) {
                     countdown = 5;
@@ -688,6 +821,97 @@
                 }
                 document.getElementById('refresh-badge').textContent = `Auto-refresh: ${countdown}s`;
             }, 1000);
+        }
+
+        // ═══ Selection Logic ═══
+        let isSelectionMode = false;
+        let selectedFiles = new Set();
+
+        function toggleSelectionMode() {
+            isSelectionMode = !isSelectionMode;
+            const btn = document.getElementById('btn-select');
+            const grid = document.getElementById('screenshot-grid');
+            const actionBar = document.getElementById('action-bar');
+            
+            if (isSelectionMode) {
+                btn.textContent = 'Cancel Selection';
+                btn.classList.add('active');
+                grid.classList.add('selection-mode');
+                document.getElementById('refresh-badge').textContent = 'Auto-refresh: Paused';
+                document.getElementById('refresh-badge').style.color = 'var(--warning)';
+            } else {
+                btn.textContent = 'Select Items';
+                btn.classList.remove('active');
+                grid.classList.remove('selection-mode');
+                selectedFiles.clear();
+                actionBar.classList.remove('visible');
+                refresh(); // Re-render to clear visual selected states
+                document.getElementById('refresh-badge').style.color = 'var(--accent)';
+                countdown = 5; // Restart countdown
+            }
+        }
+
+        function handleCardClick(filename, url) {
+            if (!isSelectionMode) {
+                openLightbox(url);
+                return;
+            }
+
+            const cardId = `card-${filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const card = document.getElementById(cardId);
+            
+            if (selectedFiles.has(filename)) {
+                selectedFiles.delete(filename);
+                card.classList.remove('selected');
+            } else {
+                selectedFiles.add(filename);
+                card.classList.add('selected');
+            }
+
+            updateActionBar();
+        }
+
+        function updateActionBar() {
+            const actionBar = document.getElementById('action-bar');
+            const countText = document.getElementById('selection-count');
+            
+            if (selectedFiles.size > 0) {
+                countText.textContent = `${selectedFiles.size} Selected`;
+                actionBar.classList.add('visible');
+            } else {
+                actionBar.classList.remove('visible');
+            }
+        }
+
+        async function deleteSelected() {
+            if (selectedFiles.size === 0) return;
+            
+            const count = selectedFiles.size;
+            if (!confirm(`Are you absolutely sure you want to permanently delete ${count} screenshot${count > 1 ? 's' : ''} from the cloud?`)) {
+                return;
+            }
+
+            const filenames = Array.from(selectedFiles);
+            
+            try {
+                const res = await fetch(`${API_BASE}/screenshots/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filenames })
+                });
+                
+                if (res.ok) {
+                    showToast(`🗑️ ${count} screenshot${count > 1 ? 's' : ''} deleted successfully`);
+                    toggleSelectionMode(); // Turn off selection mode
+                    refresh(); // Force immediate re-render
+                } else {
+                    const data = await res.json();
+                    showToast(`✗ Failed to delete: ${data.error || 'Unknown error'}`);
+                }
+            } catch (err) {
+                showToast('✗ Network error during deletion');
+                console.error(err);
+            }
         }
 
         // ═══ Initialize ═══

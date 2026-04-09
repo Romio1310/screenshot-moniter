@@ -34,8 +34,11 @@ function loadStatus() {
 
 // ═══ Check Server ═══
 async function checkServer() {
-    const urlInput = document.getElementById('server-url');
-    const url = urlInput.value || 'http://localhost:5005';
+    let urlInput = document.getElementById('server-url');
+    let url = urlInput.value.trim() || 'http://localhost:5005';
+    if (url.endsWith('/')) {
+        url = url.slice(0, -1);
+    }
 
     try {
         const res = await fetch(`${url}/`, { method: 'GET' });
@@ -52,7 +55,12 @@ async function checkServer() {
 
 // ═══ Save URL ═══
 function saveUrl() {
-    const url = document.getElementById('server-url').value.trim();
+    let url = document.getElementById('server-url').value.trim();
+    if (url.endsWith('/')) {
+        url = url.slice(0, -1);
+    }
+    document.getElementById('server-url').value = url;
+    
     if (url) {
         chrome.runtime.sendMessage({ action: 'setServerUrl', url });
         showFeedback('Server URL saved', 'success');

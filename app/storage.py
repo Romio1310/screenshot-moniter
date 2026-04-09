@@ -103,3 +103,17 @@ def list_screenshots() -> list:
 
     logger.info("Listed %d screenshots", len(screenshots))
     return screenshots
+
+def delete_local_screenshot(filename: str) -> bool:
+    """Delete a specific screenshot file from local storage."""
+    filepath = os.path.join(Config.UPLOAD_FOLDER, secure_filename(filename))
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            logger.info("Local screenshot deleted: %s", filepath)
+            return True
+        logger.warning("Local screenshot not found for deletion: %s", filepath)
+        return False
+    except Exception as e:
+        logger.error("Failed to delete local screenshot %s: %s", filepath, str(e))
+        return False
