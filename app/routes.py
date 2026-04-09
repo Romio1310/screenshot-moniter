@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, send_from_directory, send_file
 
 from app.config import Config
 from app.storage import save_screenshot, list_screenshots, delete_local_screenshot
-from app.s3_service import upload_to_s3, delete_from_s3
+from app.s3_service import upload_to_s3, delete_from_s3, list_s3_screenshots
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,8 @@ def log_response(response):
 def status():
     """Return system status with uptime and screenshot count."""
     try:
-        screenshots = list_screenshots()
+        # Intelligently source from S3 if cloud is active, otherwise fallback to local
+        screenshots = list_s3_screenshots() if Config.S3_ENABLED else list_screenshots()
         uptime_seconds = int(time.time() - _start_time)
 
         return jsonify({
@@ -126,7 +127,8 @@ def upload():
 def screenshots():
     """Return JSON list of all stored screenshots."""
     try:
-        screenshot_list = list_screenshots()
+        # Dynamically fetch from S3 if cloud storage is active
+        screenshot_list = list_s3_screenshots() if Config.S3_ENABLED else list_screenshots()
 
         return jsonify({
             "count": len(screenshot_list),

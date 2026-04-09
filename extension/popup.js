@@ -47,6 +47,12 @@ async function checkServer() {
         document.getElementById('status-dot').classList.add('connected');
         document.getElementById('status-text').textContent =
             `Connected — ${data.screenshot_count || 0} screenshots`;
+        
+        // SYNC: Update the big counter in the extension UI and storage
+        if (data.screenshot_count !== undefined) {
+            document.getElementById('capture-count').textContent = data.screenshot_count;
+            chrome.runtime.sendMessage({ action: 'syncCount', count: data.screenshot_count });
+        }
     } catch {
         document.getElementById('status-dot').classList.remove('connected');
         document.getElementById('status-text').textContent = 'Server offline (CORS/URL issue)';

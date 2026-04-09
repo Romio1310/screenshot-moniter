@@ -124,6 +124,9 @@ def list_s3_screenshots() -> list:
 
         screenshots = []
         for obj in response.get("Contents", []):
+            if obj["Key"].endswith("/") or obj["Size"] == 0:
+                continue
+
             # Generate a secure pre-signed URL valid for 1 hour
             presigned_url = client.generate_presigned_url(
                 'get_object',
@@ -132,9 +135,9 @@ def list_s3_screenshots() -> list:
             )
             
             screenshots.append({
-                "key": obj["Key"],
+                "filename": obj["Key"].replace("screenshots/", ""),
                 "size": obj["Size"],
-                "last_modified": obj["LastModified"].isoformat(),
+                "timestamp": obj["LastModified"].isoformat(),
                 "url": presigned_url,
             })
 

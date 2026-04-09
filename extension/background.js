@@ -60,6 +60,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.set({ serverUrl: message.url });
     sendResponse({ success: true });
   }
+
+  if (message.action === "syncCount") {
+    chrome.storage.local.set({ captureCount: message.count });
+    sendResponse({ success: true });
+  }
 });
 
 // ─── Core: Capture Tab & Send to Server ─────────────────
