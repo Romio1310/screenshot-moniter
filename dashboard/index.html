@@ -78,17 +78,19 @@
         .logo-image-container {
             width: 36px;
             height: 36px;
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-hover);
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
 
         .logo-img {
-            width: 130%; /* Zoom in slightly to hide the built-in text in the generation */
+            width: 130%;
+            /* Zoom in slightly to hide the built-in text in the generation */
             height: 130%;
             object-fit: contain;
         }
@@ -432,13 +434,38 @@
                 "footer       footer       footer";
         }
 
-        .area-header { grid-area: header; }
-        .area-banner { grid-area: banner; padding: 0 2rem; }
-        .area-left-aside { grid-area: left-aside; padding: 0 2rem; }
-        .area-right-aside { grid-area: right-aside; padding: 0 2rem; }
-        .area-main { grid-area: main; padding: 0 2rem 2rem; }
-        .area-low-content { grid-area: low-content; padding: 0 2rem; }
-        .area-footer { grid-area: footer; }
+        .area-header {
+            grid-area: header;
+        }
+
+        .area-banner {
+            grid-area: banner;
+            padding: 0 2rem;
+        }
+
+        .area-left-aside {
+            grid-area: left-aside;
+            padding: 0 2rem;
+        }
+
+        .area-right-aside {
+            grid-area: right-aside;
+            padding: 0 2rem;
+        }
+
+        .area-main {
+            grid-area: main;
+            padding: 0 2rem 2rem;
+        }
+
+        .area-low-content {
+            grid-area: low-content;
+            padding: 0 2rem;
+        }
+
+        .area-footer {
+            grid-area: footer;
+        }
 
         @media (max-width: 1024px) {
             .container {
@@ -450,8 +477,16 @@
                     "main"
                     "footer";
             }
-            .desktop-only { display: none; }
-            .area-banner, .area-low-content, .area-main { padding: 0 1.25rem; }
+
+            .desktop-only {
+                display: none;
+            }
+
+            .area-banner,
+            .area-low-content,
+            .area-main {
+                padding: 0 1.25rem;
+            }
         }
 
         /* Aside Styling */
@@ -473,7 +508,10 @@
             margin-bottom: 0.75rem;
             margin-top: 1.5rem;
         }
-        .aside-label:first-child { margin-top: 0; }
+
+        .aside-label:first-child {
+            margin-top: 0;
+        }
 
         .aside-content p {
             font-size: 0.8rem;
@@ -504,10 +542,23 @@
         }
 
         /* Adjustments for existing areas */
-        .header { position: unset; backdrop-filter: none; } /* Sticky handled by container rows if needed, but per-image header spans top */
-        .status-bar { margin-bottom: 0; }
-        .section-header { margin-bottom: 0; }
-        .grid { gap: 1.5rem; }
+        .header {
+            position: unset;
+            backdrop-filter: none;
+        }
+
+        /* Sticky handled by container rows if needed, but per-image header spans top */
+        .status-bar {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            margin-bottom: 0;
+        }
+
+        .grid {
+            gap: 1.5rem;
+        }
 
         /* ═══ Toast ═══ */
         .toast {
@@ -573,7 +624,8 @@
         }
 
         .grid.selection-mode .screenshot-card .overlay {
-            display: none; /* Hide 'View Full Size' text during selection */
+            display: none;
+            /* Hide 'View Full Size' text during selection */
         }
 
         .btn-toggle-select {
@@ -612,7 +664,7 @@
             display: flex;
             align-items: center;
             gap: 1.5rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 1000;
         }
@@ -662,7 +714,8 @@
                     <h1>Screenshot <span>Monitor</span></h1>
                 </div>
                 <div class="header-stats">
-                    <button class="btn-toggle-select" id="btn-select" onclick="toggleSelectionMode()">Select Items</button>
+                    <button class="btn-toggle-select" id="btn-select" onclick="toggleSelectionMode()">Select
+                        Items</button>
                     <div class="stat">
                         <div class="stat-dot live"></div>
                         <span id="status-text">Connecting...</span>
@@ -741,7 +794,7 @@
             <div class="footer-content">
                 <span>&copy; 2026 Screenshot Monitor</span>
                 <span>•</span>
-                <span style="color:var(--accent)">Developed for Educational Purpose</span>
+                <span style="color:var(--accent)">Developed for Educational Purpose Only!</span>
             </div>
         </footer>
     </div>
@@ -759,10 +812,15 @@
     <div class="action-bar" id="action-bar">
         <span id="selection-count">0 Selected</span>
         <button class="btn-delete" onclick="deleteSelected()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
             Delete
         </button>
-        <button class="btn-toggle-select" style="border:none; color:#8888a0;" onclick="toggleSelectionMode()">Cancel</button>
+        <button class="btn-toggle-select" style="border:none; color:#8888a0;"
+            onclick="toggleSelectionMode()">Cancel</button>
     </div>
 
     <script>
@@ -880,7 +938,7 @@
                     card.innerHTML = cardHtml;
                     grid.insertBefore(card, grid.firstChild);
                     currentFilenames.add(s.filename);
-                    
+
                     // Trigger a small entrance animation
                     card.style.opacity = '0';
                     card.style.transform = 'translateY(20px)';
@@ -892,12 +950,12 @@
                 } else {
                     // Update existing card classes if selection changed
                     card.className = `screenshot-card ${isSelected ? 'selected' : ''}`;
-                    
+
                     // Atomic update for metadata if it changed
                     const timeEl = card.querySelector('.timestamp');
                     const formattedTime = formatTimestamp(s.timestamp);
                     if (timeEl.textContent !== formattedTime) timeEl.textContent = formattedTime;
-                    
+
                     const sizeEl = card.querySelector('.size');
                     const formattedSize = formatSize(s.size);
                     if (sizeEl.textContent !== formattedSize) sizeEl.textContent = formattedSize;
@@ -978,7 +1036,7 @@
 
             const now = Date.now();
             const loadingBar = document.getElementById('loading-bar');
-            
+
             // Only show loading bar if it's the first load or if it's been a while (to avoid blinking)
             const showLoader = !forceSilent && (now - lastRefreshTime > 15000 || lastRefreshTime === 0);
             if (showLoader) loadingBar.classList.add('active');
@@ -1006,7 +1064,7 @@
 
         function startAutoRefresh() {
             if (refreshInterval) clearInterval(refreshInterval);
-            
+
             refresh(); // Initial load
 
             refreshInterval = setInterval(() => {
@@ -1030,7 +1088,7 @@
             const btn = document.getElementById('btn-select');
             const grid = document.getElementById('screenshot-grid');
             const actionBar = document.getElementById('action-bar');
-            
+
             if (isSelectionMode) {
                 btn.textContent = 'Cancel Selection';
                 btn.classList.add('active');
@@ -1057,7 +1115,7 @@
 
             const cardId = `card-${filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
             const card = document.getElementById(cardId);
-            
+
             if (selectedFiles.has(filename)) {
                 selectedFiles.delete(filename);
                 card.classList.remove('selected');
@@ -1072,7 +1130,7 @@
         function updateActionBar() {
             const actionBar = document.getElementById('action-bar');
             const countText = document.getElementById('selection-count');
-            
+
             if (selectedFiles.size > 0) {
                 countText.textContent = `${selectedFiles.size} Selected`;
                 actionBar.classList.add('visible');
@@ -1083,21 +1141,21 @@
 
         async function deleteSelected() {
             if (selectedFiles.size === 0) return;
-            
+
             const count = selectedFiles.size;
             if (!confirm(`Are you absolutely sure you want to permanently delete ${count} screenshot${count > 1 ? 's' : ''} from the cloud?`)) {
                 return;
             }
 
             const filenames = Array.from(selectedFiles);
-            
+
             try {
                 const res = await fetch(`${API_BASE}/screenshots/delete`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ filenames })
                 });
-                
+
                 if (res.ok) {
                     showToast(`🗑️ ${count} screenshot${count > 1 ? 's' : ''} deleted successfully`);
                     toggleSelectionMode(); // Turn off selection mode
