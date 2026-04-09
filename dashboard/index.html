@@ -409,23 +409,98 @@
         }
 
         /* ═══ Responsive ═══ */
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
-            }
-
-            .main {
-                padding: 1rem;
-            }
-
-            .grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            }
-
-            .header-stats {
-                gap: 0.75rem;
-            }
+        /* ═══ Responsive Grid Implementation (from shared design) ═══ */
+        .container {
+            display: grid;
+            grid-template-rows: auto auto auto 1fr auto auto;
+            grid-template-columns: 1fr 4fr 1fr;
+            min-height: 100vh;
+            grid-gap: 1.5rem;
+            padding: 0;
+            grid-template-areas:
+                "header       header       header"
+                "left-aside   banner       right-aside"
+                "left-aside   low-content  right-aside"
+                "left-aside   main         right-aside"
+                "footer       footer       footer";
         }
+
+        .area-header { grid-area: header; }
+        .area-banner { grid-area: banner; padding: 0 2rem; }
+        .area-left-aside { grid-area: left-aside; padding: 0 2rem; }
+        .area-right-aside { grid-area: right-aside; padding: 0 2rem; }
+        .area-main { grid-area: main; padding: 0 2rem 2rem; }
+        .area-low-content { grid-area: low-content; padding: 0 2rem; }
+        .area-footer { grid-area: footer; }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "banner"
+                    "low-content"
+                    "main"
+                    "footer";
+            }
+            .desktop-only { display: none; }
+            .area-banner, .area-low-content, .area-main { padding: 0 1.25rem; }
+        }
+
+        /* Aside Styling */
+        .aside-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 6rem;
+        }
+
+        .aside-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .aside-label:first-child { margin-top: 0; }
+
+        .aside-content p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .pulse-line {
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin-bottom: 1rem;
+        }
+
+        /* Footer Styling */
+        .area-footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Adjustments for existing areas */
+        .header { position: unset; backdrop-filter: none; } /* Sticky handled by container rows if needed, but per-image header spans top */
+        .status-bar { margin-bottom: 0; }
+        .section-header { margin-bottom: 0; }
+        .grid { gap: 1.5rem; }
 
         /* ═══ Toast ═══ */
         .toast {
@@ -569,63 +644,98 @@
 <body>
     <div id="loading-bar" class="loading-bar"></div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-inner">
-            <div class="logo">
-                <div class="logo-icon">📸</div>
-                <h1>Screenshot <span>Monitor</span></h1>
+    <div class="container">
+        <!-- Header Area -->
+        <header class="header area-header">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">📸</div>
+                    <h1>Screenshot <span>Monitor</span></h1>
+                </div>
+                <div class="header-stats">
+                    <button class="btn-toggle-select" id="btn-select" onclick="toggleSelectionMode()">Select Items</button>
+                    <div class="stat">
+                        <div class="stat-dot live"></div>
+                        <span id="status-text">Connecting...</span>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-dot count"></div>
+                        <span id="count-text">0 screenshots</span>
+                    </div>
+                    <div class="refresh-badge" id="refresh-badge">
+                        Auto-refresh: 5s
+                    </div>
+                </div>
             </div>
-            <div class="header-stats">
-                <button class="btn-toggle-select" id="btn-select" onclick="toggleSelectionMode()">Select Items</button>
-                <div class="stat">
-                    <div class="stat-dot live"></div>
-                    <span id="status-text">Connecting...</span>
-                </div>
-                <div class="stat">
-                    <div class="stat-dot count"></div>
-                    <span id="count-text">0 screenshots</span>
-                </div>
-                <div class="refresh-badge" id="refresh-badge">
-                    Auto-refresh: 5s
-                </div>
-            </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Main Content -->
-    <main class="main">
-        <!-- Status Cards -->
-        <div class="status-bar" id="status-bar">
-            <div class="status-card">
-                <div class="label">System Status</div>
-                <div class="value success" id="sys-status">—</div>
-            </div>
-            <div class="status-card">
-                <div class="label">Total Screenshots</div>
-                <div class="value accent" id="sys-count">0</div>
-            </div>
-            <div class="status-card">
-                <div class="label">Uptime</div>
-                <div class="value" id="sys-uptime">—</div>
-            </div>
-            <div class="status-card">
-                <div class="label">Last Refresh</div>
-                <div class="value" id="sys-refresh">—</div>
+        <!-- Banner Area: Stats -->
+        <div class="area-banner">
+            <div class="status-bar" id="status-bar">
+                <div class="status-card">
+                    <div class="label">System Status</div>
+                    <div class="value success" id="sys-status">—</div>
+                </div>
+                <div class="status-card">
+                    <div class="label">Total Screenshots</div>
+                    <div class="value accent" id="sys-count">0</div>
+                </div>
+                <div class="status-card">
+                    <div class="label">Uptime</div>
+                    <div class="value" id="sys-uptime">—</div>
+                </div>
+                <div class="status-card">
+                    <div class="label">Last Refresh</div>
+                    <div class="value" id="sys-refresh">—</div>
+                </div>
             </div>
         </div>
 
-        <!-- Screenshot Grid -->
-        <div class="section-header">
-            <h2>📷 Captured Screenshots</h2>
-        </div>
-        <div class="grid" id="screenshot-grid">
-            <div class="empty-state">
-                <div class="icon">📭</div>
-                <p>No screenshots captured yet. Install the Chrome Extension or upload manually via the API.</p>
+        <!-- Aside Areas (Left/Right) -->
+        <aside class="area-left-aside desktop-only">
+            <div class="aside-content">
+                <div class="aside-label">Activity</div>
+                <div class="pulse-line"></div>
+                <div class="aside-label">Filters</div>
+                <div class="filter-placeholder">Cloud Storage: S3</div>
+            </div>
+        </aside>
+
+        <aside class="area-right-aside desktop-only">
+            <div class="aside-content">
+                <div class="aside-label">Quick Help</div>
+                <p>Press <b>Esc</b> to close preview.</p>
+                <div class="aside-label">Extension</div>
+                <p>Status: <span style="color:var(--success)">Active</span></p>
+            </div>
+        </aside>
+
+        <!-- Main Area: Content -->
+        <main class="area-main">
+            <div class="grid" id="screenshot-grid">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>No screenshots captured yet. Install the Chrome Extension or upload manually via the API.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Low Content Area: Title -->
+        <div class="area-low-content">
+            <div class="section-header">
+                <h2>📷 Captured Screenshots</h2>
             </div>
         </div>
-    </main>
+
+        <!-- Footer Area -->
+        <footer class="area-footer">
+            <div class="footer-content">
+                <span>&copy; 2026 Screenshot Monitor</span>
+                <span>•</span>
+                <span style="color:var(--accent)">Advanced Agentic Coding Implementation</span>
+            </div>
+        </footer>
+    </div>
 
     <!-- Lightbox Modal -->
     <div class="lightbox" id="lightbox">
